@@ -42,3 +42,22 @@ Run from MATLAB with:
 cd Matlab
 simulation
 ```
+
+## Measured data
+
+Use `read_real_data.m` to parse measured BLE logs with the same command-interval
+logic used by the Python tuning notebooks. The parser extracts position,
+velocity, gamma, and dgamma from command segments such as:
+
+```text
+"--- SEND COMMAND: Mode=position, Value=1.0 ---"
+```
+
+Run the measured-data plotting example with:
+
+```matlab
+plot_real_data
+```
+
+Change `mode_name` and `target_value` in `plot_real_data.m` to switch between
+position and velocity logs.
