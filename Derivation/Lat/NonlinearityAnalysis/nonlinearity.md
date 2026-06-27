@@ -93,22 +93,32 @@ $$
 
 In mathematical terms, we want to find a state $z_c$ such that under the linearized control law $u_L(z) = -Kz$, the true nonlinear system escapes the controllable zone $Z_{controllable}$ in the next time step $\Delta t$, while the linearized model incorrectly predicts that the state remains safe. Crucially, to prove that this point is truly a part of the performance boundary (and not just an inherently uncontrollable state), there must exist some alternative feasible control input $u_{nl}$ that successfully keeps the nonlinear system within the zone.This gives us three conditions for $z_c$:
 
-The linear controller fails on the true nonlinear system:
+The linear controller fails on the true nonlinear system($\mathcal{B_2}$):
 
 $$
 z_c + \Delta t f(z_c) - \Delta t BK z_c \notin Z_{controllable}
 $$
 
-The linear prediction model claims the state is safe (Model Mismatch):
+The linear prediction model claims the state is safe ($\mathcal{B_1}$):
 $$z_c + \Delta t A z_c - \Delta t BK z_c \in Z_{controllable}
 $$
 
-### Set theorm
-
-Writen in set theory $\mathcal{R} = Z_{controllable}$
+To be more precise:
 
 $$
-\partial \mathcal{R} = \left\{ z_c \in \mathcal{R} \; \middle| \; 
+\text{Linear controller predicts safe} (\mathcal{B_1}) \\
+ \text{Linear controller works actually}(\mathcal{B_2}) \\
+\text{Linear controller doesn't even work}
+$$
+
+**Our goal is to find $\mathcal{B_1}$ and $\mathcal{B_2}$**.
+
+### Set theorm
+
+Writen in set theory $\mathcal{R} = Z_{controllable}$ , $\mathcal{C}$ is the ring of the set that the linear controller don't claim to be controllable, but the nonlinear system is actually controllable by this linear controller.
+
+$$
+\mathcal{C} = \left\{ z_c \in \mathcal{R} \; \middle| \; 
 \begin{aligned}
 & z_c + \Delta t \big(f(z_c) - BK z_c\big) \notin \mathcal{R} \\
 \text{and } & z_c + \Delta t \big(A - BK\big) z_c \in \mathcal{R}
@@ -116,15 +126,17 @@ $$
 \right\}
 $$
 
+Or with boundary definition, $\mathcal{C}$ is in the middle of $\mathcal{B_1}$ and $\mathcal{B_2}$, where $\mathcal{B_1}$ is the boundary of the linearized controllable set, and $\mathcal{B_2}$ is the boundary of controllable set.
 
-This way it actually assumes that $\mathcal{R}$ is a convex set, and the boundary is a hyperplane. We can discuss the limitation of this assumption later, but for now we make this assumption to simplify the analysis, and this applyies to our unicycle system as well. 
+
+This way it actually assumes that $\mathcal{B_1}$ is a subset of $\mathcal{B_2}$, we will discuss this assumption later.
 
 ### Quantify the nonlinearity
 
 First some simplifications:
 
 $$
-\partial \mathcal{R} = \left\{ z_c \in \mathcal{R} \; \middle| \; 
+\mathcal{C} = \left\{ z_c \in \mathcal{R} \; \middle| \; 
 \begin{aligned}
 & H_1(z_c) \notin \mathcal{R} \\
 \text{and } & H_2(z_c) \in \mathcal{R}
@@ -132,73 +144,75 @@ $$
 \right\}
 $$
 
-And our target is to find the expression of $G(z)$ with $H$ such that:
+And our target is to find the expression of $G_1(z), G_2(z)$ with $H$ such that:
 
 $$
-\partial \mathcal{R} = \left\{ z \in \mathbb{R}^n \; \middle| \; G(z) = 0, G \in \mathbb{R}^n \to \mathbb{R} \right \}
+\mathcal{C} = \left\{ z \in \mathbb{R}^n \; \middle| \; G_2(z) \ge 0, G_1(z) \le 0; \right \}
 $$
 
-As $\mathcal{R}$ is a convex set, at the boundary, the direction must be either tangent or point inner to the set, so we can write:
+By this definition, the actual linearized-controllable set is:
 
 $$
-\partial \mathcal{R} = \left\{ z \in \mathbb{R}^n \; \middle| \; \langle \nabla G(z), H_1(z) - z \rangle \le 0 \quad \text{and} \quad \langle \nabla G(z), H_2(z) - z \rangle \ge 0 \right\}
+\mathcal{C_l} = \left\{ z \in \mathbb{R}^n \; \middle| \; G_2(z) \le 0 \right \}
 $$
 
-Usually they apply the Cauchy-Schwarz inequality to get a more general form:
+As $\mathcal{C_l} \subseteq \mathcal{R}$ and $\mathcal{C_l}$ is a convex set, we can first calculate the boundary of $\mathcal{C_l}$, and then find the boundary of $\mathcal{C}$, and then find the difference between the two boundaries to find the nonlinearity of the system.
 
-$$
-\| \nabla G(z) \| \cdot \| \phi(z) \| \ge \langle \nabla G(z), \phi(z) \rangle
-$$
-
-However this is not the tightest bound.
-
-Give:
-
-$$
-f(z) = Az + \phi(z)
-$$
-
-And 
+Given that at the boundary the tendency of the system must be tangent to the boundary, we can give the following definition of $G_1$ and $G_2$:
 
 $$
 \begin{aligned}
-H_1(z) - z &= \Delta t \big(Az - BKz + \phi(z)\big) = \\
-H_2(z) - z &= \Delta t \big(A - BK\big)z
+G_1(z) &= -\langle \nabla G(z), A_{cl}z \rangle \\
+G_2(z) &= -\langle \nabla G(z), A_{cl}z + \phi(z) \rangle \\
 \end{aligned}
 $$
 
-Good news is that we can eliminate the $\Delta t$ term, and we can write:
+And $\mathcal{B_1} = \{ z \in \mathbb{R}^n \; | \; G_1(z) = 0 \}$, $\mathcal{B_2} = \{ z \in \mathbb{R}^n \; | \; G_2(z) = 0 \}$.
+
+As:
 
 $$
-\partial \mathcal{R} = \left\{ z \in \mathbb{R}^n \; \middle| \; \langle \nabla G(z), Az - BKz + \phi(z) \rangle \le 0 \quad \text{and} \quad \langle \nabla G(z), (A - BK)z \rangle \ge 0 \right\}
+G_2(z) - G_1(z) = -\langle \nabla G(z), \phi(z) \rangle
 $$
 
-This means that for certain $\lambda(z) \in [0, 1]$, we can write:
+$\mathcal{C} = \emptyset$ if and only if $\langle \nabla G(z), \phi(z) \rangle \le 0$ for all $z \in \mathcal{R}$, which means that the linearized controller can stabilize the nonlinear system in the whole controllable set, and the nonlineaity of the system is actually helping with the stablization.
+
+We will focus on the case where $\mathcal{C} \neq \emptyset$, as that will be most of the time we are interested in, and we will discuss the case where $\mathcal{C} = \emptyset$ later.
+
+#### Linearized controllable set with boundary $\mathcal{B_1}$
+
+Given: 
 
 $$
-\partial \mathcal{R} = \left\{ z \in \mathbb{R}^n \; \middle| \; \langle \nabla G(z), Az - BKz + \lambda(z)\phi(z) \rangle = 0 \right\}
+-\langle \nabla G(z), A_{cl}z \rangle = 0
 $$
 
-By expansion:
+
+Give $G(z) = z^T P z - 1$, we have $\nabla G(z) = 2 P z$, and the boundary of the linearized controllable set is:
 
 $$
-\lambda(z) = - \frac{\langle \nabla G(z), (A - BK)z \rangle}{\langle \nabla G(z), \phi(z) \rangle}
+\mathcal{B_1} = \left\{ z \in \mathbb{R}^n \; \middle| \; \langle Pz, A_{cl}z \rangle = 0 \right\}
 $$
 
-Then the equivalent form of the boundary is:
+The selection of the form of $G(z)$ is not unique, but by inexplicit function theorm, all the boundaries of the different forms of $G(z)$ are equivalent (actually they should be identical, as they only differ by a scaling on the speed of decay).
 
 $$
-\partial \mathcal{R} = \left\{ z \in \mathbb{R}^n \; \middle| \; \lambda(z) = - \frac{\langle \nabla G(z), (A - BK)z \rangle}{\langle \nabla G(z), \phi(z) \rangle}, \quad \lambda(z) \in [0, 1] \right\}
+\begin{aligned}
+\mathcal{B}_1 &= \left\{ z \in \mathbb{R}^n \; \middle| \; \langle Pz, A_{cl}z \rangle = 0 \right\} \\
+&= \left\{ z \in \mathbb{R}^n \; \middle| \; z^T P A_{cl} z = 0 \right\} \\
+&= \left\{ z \in \mathbb{R}^n \; \middle| \; z^T (P A_{cl} + A_{cl}^T P) z = 0 \right\}
+\end{aligned}
 $$
 
-### Find the boundary
+This actually means that linearized controllers (and there algrithoms) will always assume it can control the entire $\mathbb{R}^n$ space. (If without any constraints).
 
+#### Nonlinear controllable set with boundary $\mathcal{B_2}$
 
+Given:
 
-
-
-
-
+$$
+-\langle \nabla G(z), A_{cl}z + \phi(z) \rangle = 0
+$$
 
 
 
