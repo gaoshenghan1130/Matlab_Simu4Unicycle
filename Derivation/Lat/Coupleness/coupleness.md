@@ -8,7 +8,11 @@ To give a measure of the coupleness of the nonlinear system, the definition of c
 
 1. The coupleness is related only to the system itself and the current state. $\implies \mathcal{C} = \mathcal{C}(f, z) \in \mathbb(\mathbb{R}^n \times \mathbb{R}^n\to \mathbb{R}^n) \times \mathbb{R}^n \to \mathbb{R}^n \times \mathbb{R}^n$ 
 
-2. $\mathcal{C}_{ij} = 0$ if and only if the $i$-th and $j$-th states are not coupled. i.e. $\mathcal{C}_{ij} = 0 \iff \frac{\partial f_i}{\partial z_j} = 0$ and $\frac{\partial f_j}{\partial z_i} = 0$
+2. $\mathcal{C}_{ij} = 0$ if and only if the $i$-th and $j$-th states are not coupled. i.e:
+
+$$
+\mathcal{C}_{ij} = 0 \iff \frac{\partial f_i}{\partial z_j} = 0 \quad\text{and} \quad \frac{\partial f_j}{\partial z_i} = 0
+$$
 
 3. The coupleness should also reflect the cross-channel control authority. That is, if $\mathcal{C}_{ij} = 0$, the $j$-th control input must not directly affect the $i$-th state dynamics:
 
