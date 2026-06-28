@@ -2,6 +2,8 @@
 
 Given any nonlinear system, we can linearize it around a point and analyze the stability of the linearized system. However, the controller designed for the linearized system may not stabilize the original nonlinear system in all regions. Therefore, it is important to analyze the nonlinearity of the system and determine the regions where the linearized controller can stabilize the nonlinear system.
 
+[TOC]
+
 ## Setup
 
 Given any nonlinear system, it is of the form:
@@ -45,35 +47,6 @@ $$
 Depend on the cost function definition, the $K$ will have different values, however, ususal assumption of cost function of the form: $J(z, u) = \int_0^\infty (z^T Q z + u^T R u) dt$ may lead to limitations on time resonse thus not be able to cover all the nonlinear system behavior. 
 
 Therefore, here we assume K is any random combination of the form $K = [k_1, k_2, \ldots, k_n], \qquad k_i \in \mathbb{R}$.
-
-## Nonlinearity analysis
-
-### Discretization
-
-Use MPC ideaology, we can assume the system to be discretized with a time step $\Delta t$, and the system can be expressed as:
-
-$$
-\begin{aligned}
-z_{k+1} &= z_k + \Delta t f(z_k) + \Delta t B u_k \\
-\implies \frac{z_{k+1}}{\Delta t} &= \frac{z_k}{\Delta t} + f(z_k) + B u_k \\
-\implies \frac{z_{k+1}}{\Delta t} &= f(z_k) + \left( \frac{1}{\Delta t} I_n - BK \right) z_k
-\end{aligned}
-$$
-
-The linearized system can be expressed as:
-
-$$
-\frac{z_{k+1}}{\Delta t} = \frac{z_k}{\Delta t} + A z_k + B u_k =\frac{z_k}{\Delta t} + \frac{\partial f}{\partial z} z_k + B u_k \\
-\implies \frac{z_{k+1}}{\Delta t} = \left( \frac{1}{\Delta t} I_n + A - BK \right) z_k = \left( \frac{1}{\Delta t} I_n + \frac{\partial f}{\partial z} - BK \right) z_k
-$$
-
-Normally we do:
-
-$$
-\left( \frac{z_{k+1}}{\Delta t} \right)_{\text{nonlinear}} - \left( \frac{z_{k+1}}{\Delta t} \right)_{\text{linear}} = f(z_k) - \frac{\partial f}{\partial z} z_k
-$$
-
-This cancels out the input, and decide that the nonlinearity of the system is determined by the difference between the nonlinear function $f(z_k)$ and its linear approximation $\frac{\partial f}{\partial z} z_k$, and is independent of the input $u_k$. However, this is not true in general, as the input $u_k$ can also affect the nonlinearity of the system. Therefore, we need to consider the effect of the input on the nonlinearity of the system.
 
 ## Nonlinearity measure
 
@@ -131,7 +104,7 @@ Or with boundary definition, $\mathcal{C}$ is in the middle of $\mathcal{B_1}$ a
 
 This way it actually assumes that $\mathcal{B_1}$ is a subset of $\mathcal{B_2}$, we will discuss this assumption later.
 
-### Quantify the nonlinearity
+## Quantify the nonlinearity
 
 First some simplifications:
 
@@ -179,7 +152,7 @@ $\mathcal{C} = \emptyset$ if and only if $\langle \nabla G(z), \phi(z) \rangle \
 
 We will focus on the case where $\mathcal{C} \neq \emptyset$, as that will be most of the time we are interested in, and we will discuss the case where $\mathcal{C} = \emptyset$ later.
 
-#### Linearized controllable set with boundary $\mathcal{B_1}$
+### Linearized controllable set with boundary $\mathcal{B_1}$
 
 Given: 
 
@@ -188,31 +161,56 @@ $$
 $$
 
 
-Give $G(z) = z^T P z - 1$, we have $\nabla G(z) = 2 P z$, and the boundary of the linearized controllable set is:
+Given $G(z) = z^T P(z) z - 1$, the boundary condition is defined by the tendency of the system being tangent to the boundary surface. Instead of a static gradient, the directional derivative of $G(z)$ along the system dynamics $\dot{z}$ must be zero:$$\dot{G}_1(z) = \langle \nabla G(z), \dot{z}_{lin} \rangle = 0$$
 
-$$
-\mathcal{B_1} = \left\{ z \in \mathbb{R}^n \; \middle| \; \langle Pz, A_{cl}z \rangle = 0 \right\}
-$$
+By applying the product rule and chain rule to $G(z)$ with $\dot{z}_{lin} = A_{cl}z$, we have:$$\dot{G}_1(z) = \dot{z}_{lin}^T P(z) z + z^T P(z) \dot{z}_{lin} + z^T \dot{P}_{lin}(z) z = 0$$Where $\dot{P}_{lin}(z) = \sum_{i=1}^n \frac{\partial P(z)}{\partial z_i} (A_{cl} z)_i$ captures how the shape of the Lyapunov level set deforms along the linear trajectory.
 
-The selection of the form of $G(z)$ is not unique, but by inexplicit function theorm, all the boundaries of the different forms of $G(z)$ are equivalent (actually they should be identical, as they only differ by a scaling on the speed of decay).
+The selection of the form of $G(z)$ is not unique, but by inexplicit function theorm, all the boundaries of the different forms of $G(z)$ are equivalent (actually they should be identical, as they only differ by a scaling on the speed of decay when P is independent of z).
 
 $$
 \begin{aligned}
-\mathcal{B}_1 &= \left\{ z \in \mathbb{R}^n \; \middle| \; \langle Pz, A_{cl}z \rangle = 0 \right\} \\
-&= \left\{ z \in \mathbb{R}^n \; \middle| \; z^T P A_{cl} z = 0 \right\} \\
-&= \left\{ z \in \mathbb{R}^n \; \middle| \; z^T (P A_{cl} + A_{cl}^T P) z = 0 \right\}
+\mathcal{B}_1 &= \left\{ z \in \mathbb{R}^n \; \middle| \; z^T A_{cl}^T P(z) z + z^T P(z) A_{cl} z + z^T \dot{P}_{lin}(z) z = 0 \right\} \\
+&= \left\{ z \in \mathbb{R}^n \; \middle| \; z^T \big(P(z) A_{cl} + A_{cl}^T P(z) + \dot{P}_{lin}(z) \big) z = 0 \right\}
 \end{aligned}
 $$
 
-This actually means that linearized controllers (and there algrithoms) will always assume it can control the entire $\mathbb{R}^n$ space. (If without any constraints).
+This actually means that linearized controllers (and there algrithoms) will always assume it can control the entire $\mathbb{R}^n$ space. (If without any constraints). $P$ don't matter in this case, as there region will always be $\mathbb{R}^n$.
 
-#### Nonlinear controllable set with boundary $\mathcal{B_2}$
+### Nonlinear controllable set with boundary $\mathcal{B_2}$
+For the true nonlinear system, the dynamics are $\dot{z}_{nl} = A_{cl}z + \phi(z)$. The rate of change of the $P$ matrix along this true trajectory is $\dot{P}_{nl}(z) = \sum_{i=1}^n \frac{\partial P(z)}{\partial z_i} \dot{z}_{nl, i}$.Given the boundary condition:
 
-Given:
+$$\dot{G}_2(z) = \langle \nabla G(z), A_{cl}z + \phi(z) \rangle = 0$$
+
+Similarly, we expand this using the state-dependent $P(z)$:
+
+$$\begin{aligned}
+\mathcal{B}_2 &= \left\{ z \in \mathbb{R}^n \; \middle| \; \dot{z}_{nl}^T P(z) z + z^T P(z) \dot{z}_{nl} + z^T \dot{P}_{nl}(z) z = 0 \right\} \\
+&= \left\{ z \in \mathbb{R}^n \; \middle| \; z^T \big( P(z)(A_{cl}z + \phi(z)) + (A_{cl}z + \phi(z))^T P(z) \big) + z^T \dot{P}_{nl}(z) z = 0 \right\} \\
+&= \left\{ z \in \mathbb{R}^n \; \middle| \; z^T \big( P(z) A_{cl} + A_{cl}^T P(z) + \dot{P}_{nl}(z) \big) z + 2 z^T P(z) \phi(z) = 0 \right\}
+\end{aligned}$$
+
+Intrinsically, $z^T \big( P(z) A_{cl} + A_{cl}^T P(z) + \dot{P}_{nl}(z) \big) z \leq 0$ represents the stability of the linear baseline (now correctly penalized by boundary deformation), and $2 z^T P(z) \phi(z)$ is the nonlinearity of the system that contributes to the difference. To find the maximal boundary exactly, this equation must be satisfied by a valid $P(z)$ topology, making the definition:
+
+$$\mathcal{B}_2 = \left\{ z \in \mathbb{R}^n \; \middle| \; \max_{P(z)} \left[ z^T \big( P(z) A_{cl} + A_{cl}^T P(z) + \dot{P}_{nl}(z) \big) z + 2 z^T P(z) \phi(z) \right] = 0 \right\}
+$$
+
+Solving the boundary $\mathcal{B}_2$: Notice that $z^T M z = \text{Tr}(M z z^T)$. We can separate the static matrix variables and the derivative constraints:
 
 $$
--\langle \nabla G(z), A_{cl}z + \phi(z) \rangle = 0
+\begin{aligned}
+& z^T \big( P(z) A_{cl} + A_{cl}^T P(z) \big) z + 2 z^T P(z) \phi(z) + z^T \dot{P}_{nl}(z) z \\
+&= \text{Tr}\big( P(z) \cdot \underbrace{[A_{cl} z z^T + z z^T A_{cl}^T + \phi(z) z^T + z \phi(z)^T]}_{M(z)} \big) + \text{Tr}\big( \dot{P}_{nl}(z) z z^T \big)
+\end{aligned}
 $$
 
+So the boundary reduces to solving for a matrix function $P(z)$ such that:
 
+$$\max_{P(z)} \left[ \text{Tr}\big( P(z) \cdot M(z) \big) + \text{Tr}\big( \dot{P}_{nl}(z) z z^T \big) \right] = 0$$
 
+Here, $\text{Tr}\big( \dot{P}_{nl}(z) z z^T \big)$ serves as the mathematical "deformation penalty". It prevents the optimization from arbitrarily changing $P(z)$ to enclose unstable vectors by forcing the boundary's shape to evolve consistently with the system dynamics.The condition for the matrix function $P(z)$ over the domain is:
+
+$$
+P(z) \succ 0, \\
+\quad P(z) A_{cl} + A_{cl}^T P(z) + \dot{P}_{lin}(z) \prec 0, \quad \text{(stable linear baseline)} \\
+ \quad - \big( P(z) \cdot M(z) + \dot{P}_{nl}(z) z z^T \big) \succeq 0, \quad (\text{from } \dot{V}(x) \le 0)
+$$
