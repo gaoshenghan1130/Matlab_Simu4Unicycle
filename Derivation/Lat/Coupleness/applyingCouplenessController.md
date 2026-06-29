@@ -53,7 +53,7 @@ $$
 
 We can use symbolic toolbox to do that.
 
-## Step 1: Find the strongest coupled state
 
+## Step 1: Find the strongest coupled state
 
 

@@ -31,14 +31,14 @@ B_num = double(subs(B_eq, [m_L, m_B, m_W, h, g, R, I_b, I_w, I_rod], [par.m_L, p
 
 %% 3. Design LQR
 
-Q = diag([1000, 100, 100, 10]); 
-R_weight = 30; 
+Q = diag([100, 100, 10, 10]); 
+R_weight = 1; 
 K = lqr(A_num, B_num, Q, R_weight);
 disp('LQR Gain K:');
 disp(K);
 
 lqr_controller = @(t, z, par) - K * z; 
-z0 = [3 * pi/180; 0; 0; 0];
+z0 = [0.5 * pi/180; 0; 0; 0];
 tspan = [0, 15];
 [t_out, z_out] = ode45(@(t, z) LatModel_SignCorrection(t, z, par, lqr_controller), tspan, z0);
 
