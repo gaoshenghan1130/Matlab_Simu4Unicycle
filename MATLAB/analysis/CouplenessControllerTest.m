@@ -163,7 +163,6 @@ function [F, priorities, cu_norm] = calc_coupleness_control(z, A_func, B_func, g
     cu_norm = norm(Cu_sel);
     
     % 7. Calculate Control Forces using MIMO Tikhonov Regularization 
-    % F = C_u_sel^T * (C_u_sel * C_u_sel^T + delta * I)^(-1) * v
     delta = 1e-3; % Damping factor to prevent singularity
     F = Cu_sel' * ((Cu_sel * Cu_sel' + delta * eye(2)) \ v);
 end
