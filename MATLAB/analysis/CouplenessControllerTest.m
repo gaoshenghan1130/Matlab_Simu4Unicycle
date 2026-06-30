@@ -8,9 +8,9 @@ F_sym = [F1_sym; F2_sym]; % Two control inputs
 % System parameters
 m1 = 1.0; 
 m2 = 0.5; 
-m3 = 3.0; 
+m3 = 10.0; 
 k1 = 5.0; % Spring 1 stiffness (between m1 & m2)
-k2 = 5.0; % Spring 2 stiffness (between m2 & m3)
+k2 = 3.0; % Spring 2 stiffness (between m2 & m3)
 c1 = 0.2; % Damping 1
 c2 = 0.3; % Damping 2
 
@@ -45,7 +45,7 @@ Kd = [5, 5, 5];     % Derivative gains for m1, m2, m3
 
 % --- Controller 1: Coupleness Controller ---
 gamma = 0.1;               
-W = [1.0, 0.1, 1.5, 0.1, 1.0, 0.1];  
+W = [1.0, 0.1, 1.0, 0.1, 1.0, 0.1];  
 coupleness_controller = @(t, z) calc_coupleness_control(z, A_func, B_func, gamma, Kp, Kd, W);
 
 % --- Controller 2: Standard Collocated PD Controller ---

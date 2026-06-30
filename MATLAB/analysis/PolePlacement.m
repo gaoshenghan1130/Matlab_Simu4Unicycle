@@ -35,7 +35,6 @@ K_sym = [k1, k2, k3, k4];
 A_cl = A - (B*K_sym); % N\K = N^-1 * K = B * K
 lambda = sym('lambda');
 char_poly = det(lambda * eye(4) - A_cl);
-
 char_poly_clean = vpa(expand(char_poly), 4);
 
 P_desired = [-1.3, -1.1, -1.2, -0.9];
