@@ -1,19 +1,19 @@
-# Coupleness-Based Resource Scheduling Control vs. LQR
+# Coupleness-Based Resource Scheduling Control vs. LQR: A Comparative Analysis
 
 ## 1. System Model Recapitulation
-We are testing the controller on a benchmark **3-mass spring-damper system** with severe non-linearity (pure cubic springs) and under-actuation (3 degrees of freedom, 2 control inputs).
+To validate the controller's efficacy, we benchmark it against a highly challenging **3-mass nonlinear oscillator**. The system is characterized by severe nonlinearity (pure cubic springs) and strict under-actuation (3 degrees of freedom, but only 2 control inputs).
 
-### State Vector
-$$z = [z_1, z_2, z_3, z_4, z_5, z_6]^T$$
-* $z_1, z_3, z_5$: Positions of Mass 1, 2, and 3.
-* $z_2, z_4, z_6$: Velocities of Mass 1, 2, and 3.
+**State Vector Definition:**
+$$z = [z_1, z_2, z_3, z_4, z_5, z_6]^\top$$
+* $z_1, z_3, z_5$: Positions of Mass 1, Mass 2, and Mass 3.
+* $z_2, z_4, z_6$: Velocities of Mass 1, Mass 2, and Mass 3.
 
-### Nonlinear Spring Forces
-The springs have **no linear stiffness component**, only pure cubic terms:
+**Nonlinear Spring Dynamics:**
+The springs possess **zero linear stiffness**, acting purely through cubic force displacement:
 $$F_{spring1} = k_1 (z_1 - z_3)^3 + c_1 (z_2 - z_4)$$
 $$F_{spring2} = k_2 (z_3 - z_5)^3 + c_2 (z_4 - z_6)$$
 
-### State-Space Dynamics ($\dot{z} = f(z, F)$)
+**State-Space Formulation:**
 $$
 \dot{z} = \begin{bmatrix}
 z_2 \\
@@ -24,27 +24,37 @@ z_6 \\
 (F_{spring2} + F_2) / m_3
 \end{bmatrix}
 $$
-* *Note:* Mass 2 ($z_3, z_4$) is completely under-actuated; no direct control force is applied to it.
+*Crucial Constraint:* Mass 2 ($z_3, z_4$) is completely under-actuated. It is dynamically shielded and can only be manipulated indirectly through the network topology.
 
 ---
 
-## 2. Key Finding: Why LQR Fails (Our Algorithm's Core Value)
-When attempting to design a standard **Linear Quadratic Regulator (LQR)** as a baseline, MATLAB throws a fatal error: *"Unable to compute a stabilizing Riccati solution S."*
+## 2. The LQR Breakdown vs. Coupleness Efficacy
+When attempting to synthesize a standard **Linear Quadratic Regulator (LQR)** as a baseline, the Riccati solver fails entirely: *"Unable to compute a stabilizing Riccati solution S."*
 
-### The Mathematical Proof of LQR's Failure:
-LQR requires a linearized plant $(A, B)$ at the origin ($z = 0$). If we derive the Jacobian of the cubic spring force with respect to relative displacement:
+**The Mathematical Blind Spot of LQR:**
+LQR relies on a linearized state-space $(A, B)$ evaluated at the equilibrium origin ($z = 0$). Taking the Jacobian of the pure cubic spring force with respect to relative displacement yields:
 $$
-\frac{\partial F_{spring}}{\partial (z_1 - z_3)} = 3k_1 (z_1 - z_3)^2
+\frac{\partial F_{spring}}{\partial (z_i - z_j)} = 3k_1 (z_i - z_j)^2
 $$
-Evaluating this at the equilibrium ($z = 0$) yields exactly **0**.
+Evaluating this gradient precisely at $z = 0$ results in exactly **0**. 
 
-* **The "Blind Spot":** To the linearized model, the system at the origin appears to have **zero stiffness**. It looks like three isolated masses floating in space, connected only by dampers. 
-* **Unstabilizable Modes:** The positional states end up as un-stabilizable modes on the imaginary axis. Therefore, the Riccati equation becomes unsolvable.
+To the static linearized model, the system at the origin appears to have absolutely zero stiffness. It is perceived as three isolated floating masses connected only by dampers. The positional states of the under-actuated Mass 2 manifest as **un-stabilizable modes**, breaking the Riccati equation.
 
-### Our Controller's Performance:
+**The Coupleness Advantage:**
+Our Coupleness-Based Controller does not rely on a static origin. By continuously re-evaluating the **Dynamic Coupleness Authority ($\mathcal{C}^u$)** across the state-dependent topology, the algorithm successfully "sees" the restoring forces generated as the masses deviate. As demonstrated in the results below, it reliably guides all three masses to zero within 3 seconds.
 
-![](./couplenessControllerDesignTest3mass.png)
+![](./couplenessControllerDesignTest3mass1.png)
 
 
-## 3. The Current Bottleneck: High-Frequency Chattering
-While the position tracking looks promising (all three masses converge to zero within 3 seconds), a micro-view of the execution reveals a critical engineering flaw: **severe high-frequency chattering in the control inputs ($F_1, F_2$)**.
+Also we could do this on a five mass system, and the result is kind of good:
+
+![](./couplenessControllerDesignTest5mass1.png)
+
+![](./couplenessControllerDesignTest5mass2.png)
+
+---
+
+## 3. Current Bottleneck: Actuation Chattering
+While the state tracking performance (convergence within 3 seconds) validates the theoretical framework, a micro-analysis of the input signals reveals a practical engineering artifact: **high-frequency chattering in the control forces ($F_1, F_2$)**.
+
+This phenomenon is a direct consequence of the **hard-switching resource scheduling logic**. When the coupling priorities (Score) of two masses oscillate around the same threshold in continuous time, the finite discrete time-step ($\Delta t$) forces the selection matrix $\mathcal{C}_{u, sel}$ to abruptly jump back and forth. Resolving this switching artifact is the immediate next step in refining the control law for physical implementation.

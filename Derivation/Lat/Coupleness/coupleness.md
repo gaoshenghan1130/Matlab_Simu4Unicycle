@@ -1,58 +1,60 @@
-# Coupleness analysis of nonlinear system
+# Dynamic Coupleness Analysis for Nonlinear Control Systems
 
-$$
-\dot{z} = f(z, u), \quad z \in \mathbb{R}^n, u \in \mathbb{R}^n
-$$
+Consider a general nonlinear system:
+$$\dot{z} = f(z, u), \quad z \in \mathbb{R}^n, u \in \mathbb{R}^m$$
 
-To give a measure of the coupleness of the nonlinear system, the definition of coupleness must statisfy:
+To evaluate the net dynamic interaction and control authority for feedback design, we map the system into a **state-dependent directed weighted graph**, denoted as $\mathcal{G}(z, u) = (\mathcal{V}, \mathcal{E}, \mathcal{W})$. 
+* **Nodes $\mathcal{V}$**: State nodes $z_i$ and input nodes $u_j$.
+* **Edges and Weights $\mathcal{W}$**: The directed edge weight reflects the dynamic gain (excitation or inhibition) from one node to another. 
 
-1. The coupleness is related only to the system itself and the current state. $\implies \mathcal{C} = \mathcal{C}(f, z) \in \mathbb(\mathbb{R}^n \times \mathbb{R}^n\to \mathbb{R}^n) \times \mathbb{R}^n \to \mathbb{R}^n \times \mathbb{R}^n$ 
+Unlike purely structural topology, we define the "Dynamic Coupleness" matrix $\mathcal{C}$ to capture the **net effective interaction** across the network, preserving the signs of physical influences.
 
-2. $\mathcal{C}_{ij} = 0$ if and only if the $i$-th and $j$-th states are not coupled. i.e:
+---
 
-$$
-\mathcal{C}_{ij} = 0 \iff \frac{\partial f_i}{\partial z_j} = 0 \quad\text{and} \quad \frac{\partial f_j}{\partial z_i} = 0
-$$
+## 1. Axioms for Dynamic Coupleness
 
-3. The coupleness should also reflect the cross-channel control authority. That is, if $\mathcal{C}_{ij} = 0$, the $j$-th control input must not directly affect the $i$-th state dynamics:
+**Axiom 1: Topological & State Dependency**
+The coupleness is an intrinsic property determined by the system's dynamic gradients evaluated at the current state and input:
+$$\mathcal{C} = \mathcal{C}(\mathcal{G}(z, u))$$
 
-$$
-\mathcal{C}_{ij} = 0 \implies \frac{\partial f_i}{\partial u_j} = 0 \quad \text{and} \quad \frac{\partial f_j}{\partial u_i} = 0
-$$
+**Axiom 2: Direct Dynamic Coupling (Local Gradients)**
+The direct effective coupling from state $j$ to state $i$ is defined by the localized system Jacobian, preserving the directional gain (positive for excitation, negative for inhibition):
+$$\mathcal{C}_{ij}^{\text{direct}} = A_{ij}(z, u) = \frac{\partial f_i}{\partial z_j}$$
 
-4. Transitivity via Cascade Dynamics: If channel $i$ is coupled to $j$ ($C_{ij}$), and $j$ is coupled to $k$ ($C_{jk}$), the indirect coupleness from $i$ to $k$ is governed by the composition of their respective coupleness measures, yielding:
+**Axiom 3: Direct Input Authority**
+Control inputs act as external source nodes. The direct authority of input $j$ over state $i$ is defined by the input gradient:
+$$\mathcal{C}_{ij}^{\text{input}} = B_{ij}(z, u) = \frac{\partial f_i}{\partial u_j}$$
 
-$$
-\mathcal{C}_{ik}(z) = \sum_{j=1}^n \mathcal{C}_{ij}(z) \mathcal{C}_{jk}(z)
-$$
+**Axiom 4: Transitivity via Net Dynamic Walks**
+In a interconnected system, $j$ influences $i$ indirectly through intermediate states. The global coupleness $\mathcal{C}_{ij}$ is the **weighted sum of all directed paths**, allowing for dynamic cancellations (e.g., if parallel paths exert equal but opposite effects, the net indirect coupling is zero).
 
-5. Covariance and Absorption under Diffeomorphism: Under any smooth coordinate transformation $z^* = T(z)$, the coupleness matrix maps covariantly via the system's Jacobian matrix. Specifically, if $T(z)$ is constructed along the integral manifold of the system's invariant distribution to achieve geometric decoupling (i.e., $\frac{\partial f^*_i}{\partial z^*_j} = 0$), the intrinsic coupling between states $i$ and $j$ in the original system is entirely absorbed by the topology of the new coordinate framework, strictly yielding $\mathcal{C}^*_{ij} = 0$.
+---
 
-6. If the system is overlapped with two different physical systems, the coupleness should be able to reflect the coupleness of the two systems. i.e. $f(z, u) = f^{(1)}(z, u) + f^{(2)}(z, u)$ means:
+## 2. Analytic Derivation
 
-$$
-\|\mathcal{C}(f^{(1)} + f^{(2)}, z)\| \le \|\mathcal{C}(f^{(1)}, z)\| + \|\mathcal{C}(f^{(2)}, z)\|
-$$
+To mathematically realize Axiom 4 (Transitivity) while capturing both state and input networks, we define the **Augmented Dynamic Matrix**:
+$$\tilde{A}(z, u) = \begin{bmatrix} A(z, u) & B(z, u) \\ 0 & 0 \end{bmatrix}$$
 
-Define:
+The matrix $\tilde{A}^k$ explicitly computes the net dynamic gain accumulated over all paths of exactly length $k$. The global dynamic coupleness matrix $\tilde{\mathcal{C}}$, accounting for all feedback loops of infinite lengths, is constructed using a Katz-like resolvent series:
+$$\tilde{\mathcal{C}}(z, u) = \sum_{k=1}^\infty \gamma^k \tilde{A}^k$$
+Where $\gamma > 0$ is an attenuation factor scaling higher-order dynamic interactions, ensuring convergence ($\gamma < 1/\|\tilde{A}\|$). 
 
-$$
-A(z) =  \frac{\partial f}{\partial z}(z) , \quad B(z) =  \frac{\partial f}{\partial u}(z) 
-$$
+This yields the closed-form global coupleness:
+$$\tilde{\mathcal{C}}(z, u) = (I - \gamma \tilde{A})^{-1} - I$$
 
-To satisfy requirement 4:
+---
 
-$$
-\mathcal{C}(f, z) = I + A(z) + A^2(z) + A^3(z) + \cdots = (I - A(z))^{-1}
-$$
+## 3. Extraction for Controller Design
 
-We need an additional parameter $\gamma$ to cover all possible cases, so we have:
+By partitioning the global coupleness matrix $\tilde{\mathcal{C}}$, we extract the two critical matrices for control design:
+$$\tilde{\mathcal{C}} = \begin{bmatrix} \mathcal{C}^z & \mathcal{C}^u \\ 0 & 0 \end{bmatrix}$$
 
-$$
-\mathcal{C}^z(z) = \gamma A(z) + \gamma^2 A^2(z) + \gamma^3 A^3(z) + \cdots \\
-\implies \mathcal{C}^z(z) = (I - \gamma A(z))^{-1} - I
-$$
+**1. State-to-State Dynamic Coupleness ($\mathcal{C}^z$):**
+Captures the internal cross-coupling and internal feedback loops among states:
+$$\mathcal{C}^z(z, u) = (I - \gamma A)^{-1} - I$$
 
-$$
-\mathcal{C}^u(z) = \mathcal{C}^z(z) \cdot B(z)
-$$
+**2. Effective Control Authority ($\mathcal{C}^u$):**
+Extracts the global input-to-state authority, analytically yielding:
+$$\mathcal{C}^u(z, u) = \gamma (\mathcal{C}^z + I) B$$
+
+**Control Implication:** This elegantly shows that the *Effective Control Authority* ($\mathcal{C}^u$) is not just the direct input matrix $B$, but $B$ dynamically modulated and distributed by the system's internal state coupling network $(\mathcal{C}^z + I)$. This provides a theoretical foundation for designing decoupling controllers based on the exact inverse of $\mathcal{C}^u$.
